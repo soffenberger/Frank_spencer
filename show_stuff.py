@@ -67,13 +67,19 @@ def start_up():
 			subject_key = raw_input("What subject will the messages have? ")
 			data = {"calendar_name": calendar_name, "subject_key": subject_key}
 			json.dump(data, file)
+	if os.path.exists("message_log.txt"):
+		pass
+	else:
+		with open("message_log.txt", 'w+'):
+			os.utime("message_log.txt", None)
+			
 
 
 def check_past_message(message):
 	time = message.split(" ^% ")[1].replace("\n","")
 	time = datetime.strptime(time, "%Y-%m-%d %H:%M:%S.%f")
 	mss = message.split(" ^% ")[0]
-	if mss == "reset":
+	if mss.lower() == "reset":
 		user_message = ""
 	else:
 		cal = pdt.Calendar()
@@ -153,8 +159,8 @@ def get_google_information():
 			subject = g["value"]
 	try:
 		if senders_email.split("<")[1].split(">")[0]:
-			if (str(subject_key) in str(subject)): 
-				if (str(subject) != "reset"):
+			if (str(subject_key) in str(subject) or "reset" in subject.lower()): 
+				if (str(subject).lower() != "reset"):
 					user_message = service.users().messages().get(userId = 'me', id = i['id']).execute()['snippet']
 					service.users().messages().delete(userId = 'me', id = i['id']).execute()
 					now = datetime.now()
@@ -163,9 +169,12 @@ def get_google_information():
 						file.write(user_message + " ^% " + str(now) + "\n")
 
 				else:
+					service.users().messages().delete(userId = 'me', id = i['id']).execute()
+					now = datetime.now()
+					
 					with open("message_log.txt" , "a") as file:
 						file.write("reset" + " ^% " + str(now) + "\n")
-						user_message = ""
+					user_message = ""
 			else:
 				with open("message_log.txt" , "r") as file:
 					prev_mess = file.readlines()[-1].decode()
@@ -186,7 +195,7 @@ def get_google_information():
     "event_start": (events['items'][0]['start']['dateTime'].split("T")[0],events['items'][0]['start']['dateTime'].split("T")[1].split("-")[0][0:5]) }
     if not user_message: 
     	text_to_print = event_dict["event_summary"]  + "\nStart Date: " + event_dict["event_start"][0] + "\nStart Time: " + event_dict["event_start"][1]  + "\nEnd Date: " + event_dict["event_end"][0] + "\nEnd Time: " + event_dict["event_end"][1]
-	color = "green"
+	color = "light green"
     else:
 	text_to_print = user_message
 	color = "pink"
